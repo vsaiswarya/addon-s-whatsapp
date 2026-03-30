@@ -1,0 +1,88 @@
+{
+  "actions": [],
+  "allow_rename": 1,
+  "creation": "2026-03-25 00:00:00.000000",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "account_sid",
+    "auth_token",
+    "from_whatsapp_number",
+    "sandbox_mode",
+    "enabled",
+    "incoming_webhook_url",
+    "status_callback_url"
+  ],
+  "fields": [
+    {
+      "fieldname": "account_sid",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Account SID",
+      "reqd": 1
+    },
+    {
+      "fieldname": "auth_token",
+      "fieldtype": "Password",
+      "label": "Auth Token",
+      "reqd": 1
+    },
+    {
+      "fieldname": "from_whatsapp_number",
+      "fieldtype": "Data",
+      "label": "From WhatsApp Number",
+      "reqd": 1
+    },
+    {
+      "default": "1",
+      "fieldname": "sandbox_mode",
+      "fieldtype": "Check",
+      "label": "Sandbox Mode"
+    },
+    {
+      "default": "1",
+      "fieldname": "enabled",
+      "fieldtype": "Check",
+      "label": "Enabled"
+    },
+    {
+      "fieldname": "incoming_webhook_url",
+      "fieldtype": "Data",
+      "label": "Incoming Webhook URL",
+      "read_only": 1
+    },
+    {
+      "fieldname": "status_callback_url",
+      "fieldtype": "Data",
+      "label": "Status Callback URL",
+      "read_only": 1
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "issingle": 1,
+  "links": [],
+  "modified": "2026-03-25 00:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Twilio WhatsApp Custom",
+  "name": "Twilio WhatsApp Settings",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": []
+}
