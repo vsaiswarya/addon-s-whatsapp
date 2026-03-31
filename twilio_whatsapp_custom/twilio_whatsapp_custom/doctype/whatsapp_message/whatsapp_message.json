@@ -16,6 +16,7 @@
     "media_url",
     "media_content_type",
     "status",
+    "timestamp",
     "reference_doctype",
     "reference_name",
     "error_message",
@@ -83,6 +84,11 @@
       "in_list_view": 1,
       "label": "Status",
       "options": "\nqueued\naccepted\nsending\nsent\ndelivered\nread\nfailed\nreceived"
+    },
+    {
+      "fieldname": "timestamp",
+      "fieldtype": "Datetime",
+      "label": "Timestamp"
     },
     {
       "fieldname": "reference_doctype",
