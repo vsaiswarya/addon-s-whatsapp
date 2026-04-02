@@ -16,13 +16,6 @@ frappe.ui.form.on("WhatsApp Conversation", {
 
 		reload_latest(frm);
 
-		// if (!frm.__new_conversation_button_added) {
-		// 	frm.add_custom_button("Start New Conversation", () => {
-		// 		open_new_conversation_dialog(frm);
-		// 	});
-		// 	frm.__new_conversation_button_added = true;
-		// }
-
 		if (frm.__wa_timer) clearInterval(frm.__wa_timer);
 		frm.__wa_timer = setInterval(() => {
 			if (cur_frm && cur_frm.doc && cur_frm.doc.name === frm.doc.name) {
@@ -40,35 +33,8 @@ frappe.ui.form.on("WhatsApp Conversation", {
 	}
 });
 
-
 function escape_html(value) {
 	return frappe.utils.escape_html(value == null ? "" : String(value));
-}
-
-function linkify(text) {
-	if (!text) return "";
-
-	const escaped = escape_html(text);
-
-	return escaped.replace(
-		/(https?:\/\/[^\s<]+)/g,
-		(url) => `
-			<div style="margin-top:6px;">
-				<a href="${url}"
-					target="_blank"
-					style="
-						color:#0b57d0;
-						text-decoration:underline;
-						display:block;
-						word-break:break-word;
-						overflow-wrap:anywhere;
-						line-height:1.35;
-					">
-					${url}
-				</a>
-			</div>
-		`
-	);
 }
 
 function format_message_time(timestamp) {
@@ -80,13 +46,106 @@ function format_message_time(timestamp) {
 	}
 }
 
+function extract_last_url(text) {
+	if (!text) return null;
+	const matches = String(text).match(/https?:\/\/[^\s<]+/g);
+	return matches && matches.length ? matches[matches.length - 1] : null;
+}
+
+function strip_last_url_line(text) {
+	if (!text) return "";
+	const lines = String(text).split("\n");
+	if (!lines.length) return text;
+
+	const last = lines[lines.length - 1].trim();
+	if (/^https?:\/\//i.test(last)) {
+		lines.pop();
+	}
+	return lines.join("\n").trim();
+}
+
+function is_template_placeholder_message(m) {
+	const body = String(m.body || "").trim();
+	return body.startsWith("Template sent (HX") && body.endsWith(")");
+}
+
+function render_link_card(url, label = "Open Link") {
+	return `
+		<div style="
+			margin-top:8px;
+			border:1px solid rgba(0,0,0,.08);
+			border-radius:10px;
+			padding:8px 10px;
+			background:rgba(255,255,255,.55);
+			max-width:100%;
+		">
+			<div style="
+				font-size:12px;
+				font-weight:600;
+				color:#54656f;
+				margin-bottom:4px;
+			">
+				${escape_html(label)}
+			</div>
+			<a href="${escape_html(url)}"
+				target="_blank"
+				style="
+					color:#0b57d0;
+					text-decoration:underline;
+					word-break:break-word;
+					overflow-wrap:anywhere;
+					display:block;
+					line-height:1.35;
+					font-size:13px;
+				">
+				${escape_html(url)}
+			</a>
+		</div>
+	`;
+}
+
+function render_pdf_card(url, title) {
+	return `
+		<div style="
+			margin-top:8px;
+			border:1px solid rgba(0,0,0,.08);
+			border-radius:10px;
+			padding:10px 12px;
+			background:rgba(255,255,255,.55);
+			max-width:100%;
+		">
+			<div style="
+				font-size:13px;
+				font-weight:600;
+				color:#111b21;
+				margin-bottom:6px;
+				word-break:break-word;
+			">
+				📄 ${escape_html(title || "PDF Document")}
+			</div>
+			<a href="${escape_html(url)}"
+				target="_blank"
+				style="
+					color:#0b57d0;
+					text-decoration:underline;
+					word-break:break-word;
+					overflow-wrap:anywhere;
+					display:block;
+					line-height:1.35;
+					font-size:13px;
+				">
+				Open PDF
+			</a>
+		</div>
+	`;
+}
+
 function render_chat_shell(frm) {
 	const wrap = frm.fields_dict.chat_html?.$wrapper;
 	if (!wrap) return;
 
 	if (!frm.doc.customer_phone) {
 		wrap.html(`<div style="padding:12px; opacity:.7;">Set Customer Phone to view chat.</div>`);
-		
 		return;
 	}
 
@@ -126,19 +185,19 @@ function render_chat_shell(frm) {
 			</div>
 
 			<div style="display:flex; gap:8px; align-items:flex-end;">
-			<textarea id="wa_input" rows="2" style="
-				flex:1;
-				resize:none;
-				padding:10px 12px;
-				border:1px solid #d1d7db;
-				border-radius:12px;
-				background:#fff;
-				outline:none;
-			" placeholder="Type a message…"></textarea>
+				<textarea id="wa_input" rows="2" style="
+					flex:1;
+					resize:none;
+					padding:10px 12px;
+					border:1px solid #d1d7db;
+					border-radius:12px;
+					background:#fff;
+					outline:none;
+				" placeholder="Type a message…"></textarea>
 
-			<button class="btn btn-default" id="wa_pdf">PDF</button>
-			<button class="btn btn-primary" id="wa_send">Send</button>
-		</div>
+				<button class="btn btn-default" id="wa_pdf">PDF</button>
+				<button class="btn btn-primary" id="wa_send">Send</button>
+			</div>
 
 			<div style="display:flex; justify-content:space-between; align-items:center;">
 				<button class="btn btn-default btn-sm" id="wa_load_more">Load older</button>
@@ -217,7 +276,6 @@ function load_messages(frm, { append_older }) {
 
 				ordered.forEach((m) => {
 					const inbound = (m.direction || "").toLowerCase().includes("inbound");
-
 					const timeValue = m.timestamp || m.creation || "";
 					const time = format_message_time(timeValue);
 
@@ -232,70 +290,72 @@ function load_messages(frm, { append_older }) {
 						: "You";
 
 					let content_html = "";
+					const body = String(m.body || "").trim();
+					const mediaUrl = m.media_url ? String(m.media_url).trim() : "";
 
-					if (m.body) {
-	const lines = String(m.body).split("\n").filter(Boolean);
-	const lastLine = lines.length ? lines[lines.length - 1] : "";
-	const isLastLineUrl = /^https?:\/\//i.test(lastLine);
-
-	if (isLastLineUrl && lines.length >= 2) {
-		const normalText = lines.slice(0, -1).join("\n");
-
-		content_html += `
-			<div style="
-				white-space:pre-wrap;
-				word-break:break-word;
-				overflow-wrap:anywhere;
-			">
-				${escape_html(normalText)}
-			</div>
-
-			<div style="margin-top:6px;">
-				<a href="${escape_html(lastLine)}"
-					target="_blank"
-					style="
-						color:#0b57d0;
-						text-decoration:underline;
-						display:block;
-						word-break:break-word;
-						overflow-wrap:anywhere;
-						line-height:1.35;
-					">
-					Open Link
-				</a>
-			</div>
-		`;
-	} else {
-		content_html += `
-			<div style="
-				white-space:pre-wrap;
-				word-break:break-word;
-				overflow-wrap:anywhere;
-			">
-				${linkify(m.body)}
-			</div>
-		`;
-	}
-}
-
-					if (m.media_url) {
+					// nicer display for template sends
+					if (is_template_placeholder_message(m)) {
 						content_html += `
-							<div style="margin-top:8px;">
-								<a href="${escape_html(m.media_url)}"
-								   target="_blank"
-								   style="
-										color:#0b57d0;
-										font-weight:600;
-										text-decoration:underline;
-										word-break:break-all;
-								   ">
-									📎 Open Attachment
-								</a>
+							<div style="
+								font-size:13px;
+								font-weight:600;
+								color:#54656f;
+							">
+								Template message sent
 							</div>
 						`;
+					} else if (body) {
+						const pdfFromBody = extract_last_url(body);
+						const cleanText = strip_last_url_line(body);
+
+						if (pdfFromBody && /\.pdf(\?|$)/i.test(pdfFromBody)) {
+							if (cleanText) {
+								content_html += `
+									<div style="
+										white-space:pre-wrap;
+										word-break:break-word;
+										overflow-wrap:anywhere;
+									">
+										${escape_html(cleanText)}
+									</div>
+								`;
+							}
+							content_html += render_pdf_card(pdfFromBody, cleanText || "PDF Document");
+						} else if (pdfFromBody && /^https?:\/\//i.test(pdfFromBody)) {
+							if (cleanText) {
+								content_html += `
+									<div style="
+										white-space:pre-wrap;
+										word-break:break-word;
+										overflow-wrap:anywhere;
+									">
+										${escape_html(cleanText)}
+									</div>
+								`;
+							}
+							content_html += render_link_card(pdfFromBody, "Link");
+						} else {
+							content_html += `
+								<div style="
+									white-space:pre-wrap;
+									word-break:break-word;
+									overflow-wrap:anywhere;
+								">
+									${escape_html(body)}
+								</div>
+							`;
+						}
 					}
 
-					if (!m.body && !m.media_url) {
+					if (mediaUrl) {
+						if (/\.pdf(\?|$)/i.test(mediaUrl)) {
+							content_html += render_pdf_card(mediaUrl, body || "PDF Document");
+						} else {
+							content_html += render_link_card(mediaUrl, "Attachment");
+						}
+					}
+
+					if (!body && !mediaUrl) {
 						content_html += `<div style="opacity:.7;">(empty message)</div>`;
 					}
 
@@ -317,7 +377,7 @@ function load_messages(frm, { append_older }) {
 								font-size:14px;
 								line-height:1.42;
 								color:#111b21;
-								width:max-content;
+								width:auto;
 								max-width:62%;
 								min-width:0;
 							">
@@ -330,7 +390,9 @@ function load_messages(frm, { append_older }) {
 									${escape_html(senderName)}
 								</div>
 
-								${content_html}
+								<div style="max-width:100%;">
+									${content_html}
+								</div>
 
 								<div style="
 									font-size:11px;
@@ -438,7 +500,6 @@ function open_pdf_dialog(frm) {
 		"Send"
 	);
 }
-
 
 function open_new_conversation_dialog() {
 	frappe.prompt(
