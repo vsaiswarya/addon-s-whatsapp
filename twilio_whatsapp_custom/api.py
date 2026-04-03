@@ -4,7 +4,6 @@ from frappe.utils import get_url
 from frappe.utils.pdf import get_pdf
 import json
 
-
 from twilio_whatsapp_custom.utils import (
     get_settings,
     normalize_number,
@@ -42,6 +41,7 @@ def send_message(to_number, body=None, media_url=None, reference_doctype=None, r
         "from_": from_number,
         "to": to_number,
     }
+
 
     if body:
         payload["body"] = body
@@ -210,10 +210,10 @@ def status_callback():
     error_message = form.get("ErrorMessage")
 
     if sid:
-        name = frappe.db.get_value("WhatsApp Message", {"message_sid": sid}, "name")
+        name = frappe.db.get_value("Twilio WhatsApp Message", {"message_sid": sid}, "name")
         if name:
             frappe.db.set_value(
-                "WhatsApp Message",
+                "Twilio WhatsApp Message",
                 name,
                 {
                     "status": status,
@@ -249,10 +249,10 @@ def get_messages_by_phone(customer_phone=None, limit=50, start=0, conversation=N
     if not conv_name:
         return {"data": [], "total": 0}
 
-    total = frappe.db.count("WhatsApp Message", {"conversation": conv_name})
+    total = frappe.db.count("Twilio WhatsApp Message", {"conversation": conv_name})
 
     data = frappe.get_all(
-        "WhatsApp Message",
+        "Twilio WhatsApp Message",
         filters={"conversation": conv_name},
         fields=[
             "name",
@@ -437,3 +437,5 @@ def start_template_conversation(customer_phone, content_sid, customer=None, cont
         "sid": msg.sid,
         "status": msg.status
     }
+
+

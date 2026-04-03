@@ -78,7 +78,7 @@ def save_message(data: dict):
     message_sid = data.get("message_sid")
     if message_sid:
         existing = frappe.db.get_value(
-            "WhatsApp Message",
+            "Twilio WhatsApp Message",
             {"message_sid": message_sid},
             "name",
         )
@@ -90,7 +90,7 @@ def save_message(data: dict):
         raw_payload = json.dumps(raw_payload, default=str, indent=2)
 
     doc = frappe.get_doc({
-        "doctype": "WhatsApp Message",
+        "doctype": "Twilio WhatsApp Message",
         "conversation": data.get("conversation"),
         "direction": data.get("direction"),
         "message_sid": message_sid,
