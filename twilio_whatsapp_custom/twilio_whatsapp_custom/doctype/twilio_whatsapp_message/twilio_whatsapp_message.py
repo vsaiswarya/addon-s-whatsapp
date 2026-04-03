@@ -1,5 +1,5 @@
 from frappe.model.document import Document
 
 
-class TwilioWhatsAppMessages(Document):
+class TwilioWhatsAppMessage(Document):
     pass
