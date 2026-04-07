@@ -295,69 +295,77 @@ function load_messages(frm, { append_older }) {
 
 					// nicer display for template sends
 					if (is_template_placeholder_message(m)) {
-						content_html += `
-							<div style="
-								font-size:13px;
-								font-weight:600;
-								color:#54656f;
-							">
-								Template message sent
-							</div>
-						`;
-					} else if (body) {
-						const pdfFromBody = extract_last_url(body);
-						const cleanText = strip_last_url_line(body);
+	content_html += `
+		<div style="
+			font-size:13px;
+			font-weight:600;
+			color:#54656f;
+		">
+			Template message sent
+		</div>
+	`;
+} else if (body) {
+	if (mediaUrl) {
+		content_html += `
+			<div style="
+				white-space:pre-wrap;
+				word-break:break-word;
+				overflow-wrap:anywhere;
+			">
+				${escape_html(body)}
+			</div>
+		`;
+	} else {
+		const pdfFromBody = extract_last_url(body);
+		const cleanText = strip_last_url_line(body);
 
-						if (pdfFromBody && /\.pdf(\?|$)/i.test(pdfFromBody)) {
-							if (cleanText) {
-								content_html += `
-									<div style="
-										white-space:pre-wrap;
-										word-break:break-word;
-										overflow-wrap:anywhere;
-									">
-										${escape_html(cleanText)}
-									</div>
-								`;
-							}
-							content_html += render_pdf_card(pdfFromBody, cleanText || "PDF Document");
-						} else if (pdfFromBody && /^https?:\/\//i.test(pdfFromBody)) {
-							if (cleanText) {
-								content_html += `
-									<div style="
-										white-space:pre-wrap;
-										word-break:break-word;
-										overflow-wrap:anywhere;
-									">
-										${escape_html(cleanText)}
-									</div>
-								`;
-							}
-							content_html += render_link_card(pdfFromBody, "Link");
-						} else {
-							content_html += `
-								<div style="
-									white-space:pre-wrap;
-									word-break:break-word;
-									overflow-wrap:anywhere;
-								">
-									${escape_html(body)}
-								</div>
-							`;
-						}
-					}
+		if (pdfFromBody && /\.pdf(\?|$)/i.test(pdfFromBody)) {
+			if (cleanText) {
+				content_html += `
+					<div style="
+						white-space:pre-wrap;
+						word-break:break-word;
+						overflow-wrap:anywhere;
+					">
+						${escape_html(cleanText)}
+					</div>
+				`;
+			}
+			content_html += render_pdf_card(pdfFromBody, cleanText || "PDF Document");
+		} else if (pdfFromBody && /^https?:\/\//i.test(pdfFromBody)) {
+			if (cleanText) {
+				content_html += `
+					<div style="
+						white-space:pre-wrap;
+						word-break:break-word;
+						overflow-wrap:anywhere;
+					">
+						${escape_html(cleanText)}
+					</div>
+				`;
+			}
+			content_html += render_link_card(pdfFromBody, "Link");
+		} else {
+			content_html += `
+				<div style="
+					white-space:pre-wrap;
+					word-break:break-word;
+					overflow-wrap:anywhere;
+				">
+					${escape_html(body)}
+				</div>
+			`;
+		}
+	}
+}
 
-					if (mediaUrl) {
-						if (/\.pdf(\?|$)/i.test(mediaUrl)) {
-							content_html += render_pdf_card(mediaUrl, body || "PDF Document");
-						} else {
-							content_html += render_link_card(mediaUrl, "Attachment");
-						}
-					}
-
-					if (!body && !mediaUrl) {
-						content_html += `<div style="opacity:.7;">(empty message)</div>`;
-					}
+if (mediaUrl) {
+	if (/\.pdf(\?|$)/i.test(mediaUrl)) {
+		content_html += render_pdf_card(mediaUrl, "Sales Invoice PDF");
+	} else {
+		content_html += render_link_card(mediaUrl, "Attachment");
+	}
+}
 
 					html += `
 						<div style="

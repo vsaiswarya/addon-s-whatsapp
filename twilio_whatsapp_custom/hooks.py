@@ -250,3 +250,9 @@ app_license = "mit"
 doctype_list_js = {
     "WhatsApp Conversation": "public/js/whatsapp_conversation_list.js"
 }
+
+doc_events = {
+    "Sales Invoice": {
+        "on_submit": "twilio_whatsapp_custom.sales_invoice_whatsapp.send_sales_invoice_whatsapp"
+    }
+}

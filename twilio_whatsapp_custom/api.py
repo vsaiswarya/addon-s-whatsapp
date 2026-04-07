@@ -348,7 +348,8 @@ def send_template_message(to_number, content_sid, content_variables=None):
         "from_number": from_number,
         "to_number": to_number,
         "message_type": "Template",
-        "body": f"Template sent ({content_sid})",
+        # "body": f"Template sent ({content_sid})",
+        "body": f"Hi {customer}, greetings from Addon-s LLC! Hope you are doing well.",
         "status": msg.status,
         "timestamp": frappe.utils.now(),
         "raw_payload": {
@@ -419,7 +420,7 @@ def start_template_conversation(customer_phone, content_sid, customer=None, cont
         "from_number": from_number,
         "to_number": customer_phone,
         "message_type": "Template",
-        "body": f"Template sent ({content_sid})",
+        "body": f"Hi {customer}, greetings from Addon-s LLC! Hope you are doing well.",
         "status": msg.status,
         "timestamp": frappe.utils.now(),
         "raw_payload": {
