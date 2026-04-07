@@ -361,7 +361,7 @@ function load_messages(frm, { append_older }) {
 
 if (mediaUrl) {
 	if (/\.pdf(\?|$)/i.test(mediaUrl)) {
-		content_html += render_pdf_card(mediaUrl, "Sales Invoice PDF");
+		content_html += render_pdf_card(mediaUrl, "Document");
 	} else {
 		content_html += render_link_card(mediaUrl, "Attachment");
 	}
